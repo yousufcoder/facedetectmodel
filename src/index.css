@@ -1,0 +1,13 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family:"courier";
+
+  background-image: linear-gradient(to right, rgb(212, 129, 198), rgb(12, 132, 211));
+}
+
+button {
+  cursor: pointer;
+}
+
+
