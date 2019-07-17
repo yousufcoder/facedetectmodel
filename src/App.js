@@ -1,5 +1,4 @@
 import React,{Component} from 'react';
-import Clarifai from 'clarifai';
 import Particles from 'react-particles-js';
 import Navigation from './components/navigation/navigation';
 import SignIn from './components/signIn/signIn';
@@ -10,9 +9,6 @@ import ImageLinkForm from './components/ImageLinkForm/imageLinkForm';
 import FaceRecognition from './components/FaceRecognition/FaceRecognition';
 import './App.css';
 
-const app = new Clarifai.App({
-  apiKey: 'a5dfce18e3934d69ac47c0ac798e2600'
- });
 const particlesOptions ={
         particles: {
           number: {
@@ -24,10 +20,7 @@ const particlesOptions ={
           }
         }
 }
-class App extends Component{
-      constructor(){
-        super();
-        this.state={
+const initialState={
           input:'',
           imageUrl:'',
           box:{},
@@ -41,7 +34,11 @@ class App extends Component{
                 entries:0,
                 joined:''
             }
-        }
+}
+class App extends Component{
+      constructor(){
+        super();
+        this.state=initialState;
       }
       loadUser=(data)=>{
         this.setState({user:{
@@ -50,10 +47,10 @@ class App extends Component{
                 email:data.name,
                 entries:data.entries,
                 joined:data.join
-        }
-      })
+        }})
       }
       
+
       calculateFaceLocation=(data)=>{
         const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
         const image = document.getElementById('inputImage');
@@ -74,9 +71,15 @@ class App extends Component{
       }
       onButtonClick=()=>{
         this.setState({imageUrl:this.state.input});
-        app.models.predict(
-            Clarifai.FACE_DETECT_MODEL, 
-          this.state.input)
+        
+        fetch('http://localhost:3001/imageurl',{
+              method:'post',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+                input:this.state.input
+            })
+          })
+            .then(response=>response.json())
         .then(response =>{
           if(response){
             fetch('http://localhost:3001/image',{
@@ -90,15 +93,17 @@ class App extends Component{
             .then(count=>{
               this.setState(Object.assign(this.state.user,{entries:count}))
             })
+            .catch(console.log)
           }
           this.displayFaceBox(this.calculateFaceLocation(response))
         })
+
         .catch(error=>console.log(error));
 
       }
       onRouteChange = (route)=>{
         if(route === 'signout'){
-          this.setState({isSignedIn:false})
+          this.setState(initialState)
         }else if(route === 'home'){
           this.setState({isSignedIn:true})
         }
@@ -122,8 +127,10 @@ class App extends Component{
           </div>
           :(
             route === 'signin'
+
           ?<SignIn loadUser={this.loadUser} onRouteChange={this.onRouteChange}/>
           :<Register loadUser={this.loadUser} onRouteChange= {this.onRouteChange}/>
+          
           )
         }
       </div>
